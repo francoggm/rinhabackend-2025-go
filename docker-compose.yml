@@ -8,6 +8,7 @@ services:
       - backend
       - payment-processor
     environment:
+      - PORT=8080
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
@@ -16,7 +17,8 @@ services:
       - PAYMENT_DEFAULT_URL=http://payment-processor-default:8080
       - PAYMENT_FALLBACK_URL=http://payment-processor-fallback:8080
     depends_on:
-      - server-db
+      server-db:
+        condition: service_healthy
     restart: unless-stopped
 
   server-db:
