@@ -1,0 +1,49 @@
+services:
+  server:
+    container_name: rinha-server
+    build: .
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+      - payment-processor
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=payments
+      - PAYMENT_DEFAULT_URL=http://payment-processor-default:8080
+      - PAYMENT_FALLBACK_URL=http://payment-processor-fallback:8080
+    depends_on:
+      - server-db
+    restart: unless-stopped
+
+  server-db:
+    container_name: rinha-server-db
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=payments
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d payments"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
+  # payment-processor must be up before starting backend network
+  payment-processor:
+    external: true
