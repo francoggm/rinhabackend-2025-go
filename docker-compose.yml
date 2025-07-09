@@ -8,7 +8,9 @@ services:
       - backend
       - payment-processor
     environment:
-      - PORT=8080
+      - WORKERS_COUNT=5
+      - WORKERS_EVENTS_BUFFER_SIZE=100
+      - SERVER_PORT=8080
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
@@ -30,7 +32,7 @@ services:
       - POSTGRES_DB=payments
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - /project/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./project/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     restart: unless-stopped

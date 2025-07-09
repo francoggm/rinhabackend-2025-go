@@ -28,7 +28,7 @@ func NewServer(cfg *config.Config) *Server {
 
 func (s *Server) registerRoutes() {
 	s.router.Post("/payments", s.handlers.ProcessPayment)
-	s.router.Get("/payments-sumarry", s.handlers.GetPaymentsSummary)
+	s.router.Get("/payments-summary", s.handlers.GetPaymentsSummary)
 }
 
 func (s *Server) Run() error {
