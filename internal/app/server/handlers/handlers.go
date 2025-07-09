@@ -1,7 +1,11 @@
 package handlers
 
-type Handlers struct{}
+import "francoggm/rinhabackend-2025-go/internal/config"
 
-func NewHandlers() *Handlers {
-	return &Handlers{}
+type Handlers struct {
+	cfg *config.Config
+}
+
+func NewHandlers(cfg *config.Config) *Handlers {
+	return &Handlers{cfg: cfg}
 }

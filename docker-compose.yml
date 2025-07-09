@@ -3,7 +3,7 @@ services:
     container_name: rinha-server
     build: .
     ports:
-      - "8080:8080"
+      - "9999:8080"
     networks:
       - backend
       - payment-processor
@@ -30,7 +30,7 @@ services:
       - POSTGRES_DB=payments
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./config/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - /project/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     restart: unless-stopped

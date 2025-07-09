@@ -9,7 +9,7 @@ func main() {
 	cfg := config.NewConfig()
 
 	server := server.NewServer(cfg)
-	if err := server.Start(); err != nil {
+	if err := server.Run(); err != nil {
 		panic(err)
 	}
 }

@@ -16,13 +16,22 @@ type Server struct {
 }
 
 func NewServer(cfg *config.Config) *Server {
-	return &Server{
+	srv := &Server{
 		cfg:      cfg,
 		router:   chi.NewRouter(),
-		handlers: handlers.NewHandlers(),
+		handlers: handlers.NewHandlers(cfg),
 	}
+
+	srv.registerRoutes()
+	return srv
 }
 
-func (s *Server) Start() error {
+func (s *Server) registerRoutes() {
+	s.router.Post("/payments", s.handlers.ProcessPayment)
+	s.router.Get("/payments-sumarry", s.handlers.GetPaymentsSummary)
+}
+
+func (s *Server) Run() error {
+	fmt.Println("Starting server on port:", s.cfg.Port)
 	return http.ListenAndServe(fmt.Sprintf(":%s", s.cfg.Port), s.router)
 }
