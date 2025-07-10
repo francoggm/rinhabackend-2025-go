@@ -6,13 +6,24 @@ import (
 )
 
 type Config struct {
+	Database
 	Workers
 	Server
 }
 
+type Database struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
+}
+
 type Workers struct {
-	WorkerCount            int
-	WorkerEventsBufferSize int
+	ProcessorCount      int
+	ProcessorBufferSize int
+	StorageCount        int
+	StorageBufferSize   int
 }
 
 type Server struct {
@@ -21,9 +32,18 @@ type Server struct {
 
 func NewConfig() *Config {
 	return &Config{
+		Database: Database{
+			Host:     getEnvString("DB_HOST", "localhost"),
+			Port:     getEnvString("DB_PORT", "5432"),
+			User:     getEnvString("DB_USER", "postgres"),
+			Password: getEnvString("DB_PASSWORD", "password"),
+			Name:     getEnvString("DB_NAME", "payments"),
+		},
 		Workers: Workers{
-			WorkerCount:            getEnvInt("WORKERS_COUNT", 5),
-			WorkerEventsBufferSize: getEnvInt("WORKERS_EVENTS_BUFFER_SIZE", 100),
+			ProcessorCount:      getEnvInt("PROCESSOR_WORKERS_COUNT", 5),
+			ProcessorBufferSize: getEnvInt("PROCESSOR_WORKERS_EVENTS_BUFFER_SIZE", 100),
+			StorageCount:        getEnvInt("STORAGE_WORKERS_COUNT", 5),
+			StorageBufferSize:   getEnvInt("STORAGE_WORKERS_EVENTS_BUFFER_SIZE", 100),
 		},
 		Server: Server{
 			Port: getEnvString("SERVER_PORT", "8080"),

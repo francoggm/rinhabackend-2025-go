@@ -1,11 +1,22 @@
 package handlers
 
-import "francoggm/rinhabackend-2025-go/internal/config"
+import (
+	"francoggm/rinhabackend-2025-go/internal/app/models"
+	"francoggm/rinhabackend-2025-go/internal/config"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
 type Handlers struct {
-	cfg *config.Config
+	cfg    *config.Config
+	db     *pgxpool.Pool
+	events chan *models.Event
 }
 
-func NewHandlers(cfg *config.Config) *Handlers {
-	return &Handlers{cfg: cfg}
+func NewHandlers(cfg *config.Config, db *pgxpool.Pool, events chan *models.Event) *Handlers {
+	return &Handlers{
+		cfg:    cfg,
+		db:     db,
+		events: events,
+	}
 }

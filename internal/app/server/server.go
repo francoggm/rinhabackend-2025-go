@@ -2,11 +2,13 @@ package server
 
 import (
 	"fmt"
+	"francoggm/rinhabackend-2025-go/internal/app/models"
 	"francoggm/rinhabackend-2025-go/internal/app/server/handlers"
 	"francoggm/rinhabackend-2025-go/internal/config"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Server struct {
@@ -15,11 +17,11 @@ type Server struct {
 	handlers *handlers.Handlers
 }
 
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, db *pgxpool.Pool, events chan *models.Event) *Server {
 	srv := &Server{
 		cfg:      cfg,
 		router:   chi.NewRouter(),
-		handlers: handlers.NewHandlers(cfg),
+		handlers: handlers.NewHandlers(cfg, db, events),
 	}
 
 	srv.registerRoutes()
@@ -32,6 +34,6 @@ func (s *Server) registerRoutes() {
 }
 
 func (s *Server) Run() error {
-	fmt.Println("Starting server on port:", s.cfg.Port)
-	return http.ListenAndServe(fmt.Sprintf(":%s", s.cfg.Port), s.router)
+	fmt.Println("Starting server on port:", s.cfg.Server.Port)
+	return http.ListenAndServe(fmt.Sprintf(":%s", s.cfg.Server.Port), s.router)
 }
