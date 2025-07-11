@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type Server struct {
@@ -33,6 +34,6 @@ func (s *Server) registerRoutes() {
 }
 
 func (s *Server) Run() error {
-	fmt.Println("Starting server on port:", s.cfg.Server.Port)
+	zap.L().Info("Starting server", zap.String("port", s.cfg.Server.Port))
 	return http.ListenAndServe(fmt.Sprintf(":%s", s.cfg.Server.Port), s.router)
 }

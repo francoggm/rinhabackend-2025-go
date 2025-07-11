@@ -9,6 +9,7 @@ type Config struct {
 	Database
 	Workers
 	Server
+	PaymentProcessorConfig
 }
 
 type Database struct {
@@ -30,6 +31,11 @@ type Server struct {
 	Port string
 }
 
+type PaymentProcessorConfig struct {
+	DefaultURL  string
+	FallbackURL string
+}
+
 func NewConfig() *Config {
 	return &Config{
 		Database: Database{
@@ -47,6 +53,10 @@ func NewConfig() *Config {
 		},
 		Server: Server{
 			Port: getEnvString("SERVER_PORT", "8080"),
+		},
+		PaymentProcessorConfig: PaymentProcessorConfig{
+			DefaultURL:  getEnvString("PAYMENT_PROCESSOR_DEFAULT_URL", "http://localhost:8081"),
+			FallbackURL: getEnvString("PAYMENT_PROCESSOR_FALLBACK_URL", "http://localhost:8082"),
 		},
 	}
 }

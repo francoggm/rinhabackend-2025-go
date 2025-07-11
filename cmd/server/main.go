@@ -9,9 +9,13 @@ import (
 	"francoggm/rinhabackend-2025-go/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 func main() {
+	zapLogger, _ := zap.NewProduction()
+	zap.ReplaceGlobals(zapLogger)
+
 	cfg := config.NewConfig()
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
@@ -34,7 +38,7 @@ func main() {
 	storageEventsCh := make(chan any, cfg.StorageBufferSize)
 
 	// Worker processors
-	paymentProcessor := processors.NewPaymentProcessor()
+	paymentProcessor := processors.NewPaymentProcessor(cfg.DefaultURL, cfg.FallbackURL)
 	storageProcessor := processors.NewStorageProcessor()
 
 	// Worker orchestrators

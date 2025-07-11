@@ -15,13 +15,8 @@ func (h *Handlers) ProcessPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	event := &models.Event{
-		CorrelationID: payment.CorrelationID,
-		Amount:        payment.Amount,
-		RequestedAt:   time.Now().UTC(),
-	}
-
-	h.paymentEventsCh <- event
+	payment.RequestedAt = time.Now()
+	h.paymentEventsCh <- &payment
 
 	w.WriteHeader(http.StatusAccepted)
 }

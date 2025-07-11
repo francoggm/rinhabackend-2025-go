@@ -1,5 +1,7 @@
 package processors
 
+import "context"
+
 type Processor interface {
-	ProcessEvent(event any) error
+	ProcessEvent(ctx context.Context, event any) error
 }
