@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"francoggm/rinhabackend-2025-go/internal/app/models"
+	"francoggm/rinhabackend-2025-go/internal/models"
 	"net/http"
 	"time"
 )
@@ -21,7 +21,7 @@ func (h *Handlers) ProcessPayment(w http.ResponseWriter, r *http.Request) {
 		RequestedAt:   time.Now().UTC(),
 	}
 
-	h.events <- event
+	h.paymentEventsCh <- event
 
 	w.WriteHeader(http.StatusAccepted)
 }

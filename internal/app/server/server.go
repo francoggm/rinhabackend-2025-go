@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"francoggm/rinhabackend-2025-go/internal/app/models"
 	"francoggm/rinhabackend-2025-go/internal/app/server/handlers"
 	"francoggm/rinhabackend-2025-go/internal/config"
 	"net/http"
@@ -17,11 +16,11 @@ type Server struct {
 	handlers *handlers.Handlers
 }
 
-func NewServer(cfg *config.Config, db *pgxpool.Pool, events chan *models.Event) *Server {
+func NewServer(cfg *config.Config, db *pgxpool.Pool, paymentEventsCh chan any) *Server {
 	srv := &Server{
 		cfg:      cfg,
 		router:   chi.NewRouter(),
-		handlers: handlers.NewHandlers(cfg, db, events),
+		handlers: handlers.NewHandlers(cfg, db, paymentEventsCh),
 	}
 
 	srv.registerRoutes()

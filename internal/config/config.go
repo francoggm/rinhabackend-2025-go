@@ -20,10 +20,10 @@ type Database struct {
 }
 
 type Workers struct {
-	ProcessorCount      int
-	ProcessorBufferSize int
-	StorageCount        int
-	StorageBufferSize   int
+	PaymentCount      int
+	PaymentBufferSize int
+	StorageCount      int
+	StorageBufferSize int
 }
 
 type Server struct {
@@ -40,10 +40,10 @@ func NewConfig() *Config {
 			Name:     getEnvString("DB_NAME", "payments"),
 		},
 		Workers: Workers{
-			ProcessorCount:      getEnvInt("PROCESSOR_WORKERS_COUNT", 5),
-			ProcessorBufferSize: getEnvInt("PROCESSOR_WORKERS_EVENTS_BUFFER_SIZE", 100),
-			StorageCount:        getEnvInt("STORAGE_WORKERS_COUNT", 5),
-			StorageBufferSize:   getEnvInt("STORAGE_WORKERS_EVENTS_BUFFER_SIZE", 100),
+			PaymentCount:      getEnvInt("PAYMENT_WORKERS_COUNT", 5),
+			PaymentBufferSize: getEnvInt("PAYMENT_WORKERS_EVENTS_BUFFER_SIZE", 100),
+			StorageCount:      getEnvInt("STORAGE_WORKERS_COUNT", 5),
+			StorageBufferSize: getEnvInt("STORAGE_WORKERS_EVENTS_BUFFER_SIZE", 100),
 		},
 		Server: Server{
 			Port: getEnvString("SERVER_PORT", "8080"),

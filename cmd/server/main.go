@@ -3,10 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"francoggm/rinhabackend-2025-go/internal/app/models"
 	"francoggm/rinhabackend-2025-go/internal/app/server"
-	processorworker "francoggm/rinhabackend-2025-go/internal/app/workers/processor"
-	storageworker "francoggm/rinhabackend-2025-go/internal/app/workers/storage"
+	"francoggm/rinhabackend-2025-go/internal/app/workers"
+	"francoggm/rinhabackend-2025-go/internal/app/workers/processors"
 	"francoggm/rinhabackend-2025-go/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,21 +30,26 @@ func main() {
 	}
 
 	// Worker queues
-	processorEvents := make(chan *models.Event, cfg.ProcessorBufferSize)
-	storageEvents := make(chan *models.Event, cfg.StorageBufferSize)
+	paymentEventsCh := make(chan any, cfg.PaymentBufferSize)
+	storageEventsCh := make(chan any, cfg.StorageBufferSize)
+
+	// Worker processors
+	paymentProcessor := processors.NewPaymentProcessor()
+	storageProcessor := processors.NewStorageProcessor()
 
 	// Worker orchestrators
-	processorOrchestrator := processorworker.NewOrchestrator(cfg, processorEvents, storageEvents)
-	storageOrchestrator := storageworker.NewOrchestrator(cfg, storageEvents, db)
+	paymentOrchestrator := workers.NewOrchestrator(cfg.PaymentCount, paymentEventsCh, paymentProcessor)
+	storageOrchestrator := workers.NewOrchestrator(cfg.StorageCount, storageEventsCh, storageProcessor)
 
+	// Start workers in order of processing
 	storageOrchestrator.StartWorkers(ctx)
-	processorOrchestrator.StartWorkers(ctx)
+	paymentOrchestrator.StartWorkers(ctx)
 
-	server := server.NewServer(cfg, db, processorEvents)
+	server := server.NewServer(cfg, db, paymentEventsCh)
 	if err := server.Run(); err != nil {
 		panic(err)
 	}
 
-	close(processorEvents)
-	close(storageEvents)
+	close(paymentEventsCh)
+	close(storageEventsCh)
 }
