@@ -84,7 +84,7 @@ func (p *PaymentProcessor) ProcessEvent(ctx context.Context, event any) error {
 }
 
 func (p *PaymentProcessor) startHealthChecker() {
-	ticker := time.NewTicker(51000 * time.Millisecond)
+	ticker := time.NewTicker(5100 * time.Millisecond)
 	defer ticker.Stop()
 
 	for range ticker.C {
@@ -130,7 +130,12 @@ func (p *PaymentProcessor) checkFallbackHealth(ctx context.Context) {
 }
 
 func (p *PaymentProcessor) checkHealth(ctx context.Context, url string) (*models.HealthCheck, error) {
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("health check request failed: %w", err)
 	}

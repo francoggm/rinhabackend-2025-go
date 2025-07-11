@@ -55,8 +55,8 @@ func NewConfig() *Config {
 			Port: getEnvString("SERVER_PORT", "8080"),
 		},
 		PaymentProcessorConfig: PaymentProcessorConfig{
-			DefaultURL:  getEnvString("PAYMENT_PROCESSOR_DEFAULT_URL", "http://localhost:8081"),
-			FallbackURL: getEnvString("PAYMENT_PROCESSOR_FALLBACK_URL", "http://localhost:8082"),
+			DefaultURL:  getEnvString("PAYMENT_DEFAULT_URL", "http://localhost:8081"),
+			FallbackURL: getEnvString("PAYMENT_FALLBACK_URL", "http://localhost:8082"),
 		},
 	}
 }
