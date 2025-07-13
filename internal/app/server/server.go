@@ -3,11 +3,11 @@ package server
 import (
 	"fmt"
 	"francoggm/rinhabackend-2025-go/internal/app/server/handlers"
+	"francoggm/rinhabackend-2025-go/internal/app/services"
 	"francoggm/rinhabackend-2025-go/internal/config"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
@@ -17,11 +17,11 @@ type Server struct {
 	handlers *handlers.Handlers
 }
 
-func NewServer(cfg *config.Config, db *pgxpool.Pool, paymentEventsCh chan any) *Server {
+func NewServer(cfg *config.Config, storageService *services.StorageService, paymentEventsCh chan any) *Server {
 	srv := &Server{
 		cfg:      cfg,
 		router:   chi.NewRouter(),
-		handlers: handlers.NewHandlers(cfg, db, paymentEventsCh),
+		handlers: handlers.NewHandlers(cfg, storageService, paymentEventsCh),
 	}
 
 	srv.registerRoutes()

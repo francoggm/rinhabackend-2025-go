@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"francoggm/rinhabackend-2025-go/internal/app/server"
+	"francoggm/rinhabackend-2025-go/internal/app/services"
 	"francoggm/rinhabackend-2025-go/internal/app/workers"
 	"francoggm/rinhabackend-2025-go/internal/app/workers/processors"
 	"francoggm/rinhabackend-2025-go/internal/config"
@@ -37,9 +38,13 @@ func main() {
 	paymentEventsCh := make(chan any, cfg.PaymentBufferSize)
 	storageEventsCh := make(chan any, cfg.StorageBufferSize)
 
+	// Services
+	paymentService := services.NewPaymentService(cfg.DefaultURL, cfg.FallbackURL)
+	storageService := services.NewStorageService(db)
+
 	// Worker processors
-	paymentProcessor := processors.NewPaymentProcessor(cfg.DefaultURL, cfg.FallbackURL)
-	storageProcessor := processors.NewStorageProcessor()
+	paymentProcessor := processors.NewPaymentProcessor(paymentService, storageEventsCh)
+	storageProcessor := processors.NewStorageProcessor(storageService)
 
 	// Worker orchestrators
 	paymentOrchestrator := workers.NewOrchestrator(cfg.PaymentCount, paymentEventsCh, paymentProcessor)
@@ -49,7 +54,7 @@ func main() {
 	storageOrchestrator.StartWorkers(ctx)
 	paymentOrchestrator.StartWorkers(ctx)
 
-	server := server.NewServer(cfg, db, paymentEventsCh)
+	server := server.NewServer(cfg, storageService, paymentEventsCh)
 	if err := server.Run(); err != nil {
 		panic(err)
 	}

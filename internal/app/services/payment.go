@@ -1,4 +1,4 @@
-package processors
+package services
 
 import (
 	"bytes"
@@ -13,8 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type PaymentProcessor struct {
-	storageEventsCh         chan any
+type PaymentService struct {
 	httpClient              *http.Client
 	defaultURL              string
 	fallbackURL             string
@@ -23,7 +22,7 @@ type PaymentProcessor struct {
 	fallbackMinResponseTime atomic.Int32
 }
 
-func NewPaymentProcessor(defaultURL, fallbackURL string) *PaymentProcessor {
+func NewPaymentService(defaultURL, fallbackURL string) *PaymentService {
 	httpClient := &http.Client{
 		Timeout: 2 * time.Second,
 		Transport: &http.Transport{
@@ -33,33 +32,29 @@ func NewPaymentProcessor(defaultURL, fallbackURL string) *PaymentProcessor {
 		},
 	}
 
-	p := &PaymentProcessor{
+	service := &PaymentService{
 		httpClient:  httpClient,
 		defaultURL:  defaultURL,
 		fallbackURL: fallbackURL,
 	}
 
-	go p.startHealthChecker()
-
-	return p
+	go service.startHealthChecker()
+	return service
 }
 
-func (p *PaymentProcessor) ProcessEvent(ctx context.Context, event any) error {
-	payment, ok := event.(*models.Payment)
-	if !ok {
-		return fmt.Errorf("invalid event type: %T, expected models.Payment", event)
-	}
-
+func (p *PaymentService) MakePayment(ctx context.Context, payment *models.Payment) error {
 	payload, err := json.Marshal(payment)
 	if err != nil {
 		return err
 	}
 
-	var url string
+	var url, processingType string
 	if p.isDefaultHealthy.Load() {
 		url = p.defaultURL
+		processingType = "default"
 	} else {
 		url = p.fallbackURL
+		processingType = "fallback"
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
@@ -77,13 +72,12 @@ func (p *PaymentProcessor) ProcessEvent(ctx context.Context, event any) error {
 		return fmt.Errorf("received non-200 response from %s: %d", url, resp.StatusCode)
 	}
 
-	// Request suceeded, send an event to the storage workers
-	p.storageEventsCh <- payment
+	payment.ProcessingType = processingType
 
 	return nil
 }
 
-func (p *PaymentProcessor) startHealthChecker() {
+func (p *PaymentService) startHealthChecker() {
 	ticker := time.NewTicker(5100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -95,7 +89,7 @@ func (p *PaymentProcessor) startHealthChecker() {
 	}
 }
 
-func (p *PaymentProcessor) checkDefaultHealth(ctx context.Context) {
+func (p *PaymentService) checkDefaultHealth(ctx context.Context) {
 	defaultHealthCheck, err := p.checkHealth(ctx, p.defaultURL+"/health")
 	if err != nil {
 		zap.L().Error("default health check failed", zap.Error(err))
@@ -113,7 +107,7 @@ func (p *PaymentProcessor) checkDefaultHealth(ctx context.Context) {
 	p.defaultMinResponseTime.Store(int32(defaultHealthCheck.MinResponseTime))
 }
 
-func (p *PaymentProcessor) checkFallbackHealth(ctx context.Context) {
+func (p *PaymentService) checkFallbackHealth(ctx context.Context) {
 	fallbackHealthCheck, err := p.checkHealth(ctx, p.fallbackURL+"/health")
 	if err != nil {
 		zap.L().Error("fallback health check failed", zap.Error(err))
@@ -129,7 +123,7 @@ func (p *PaymentProcessor) checkFallbackHealth(ctx context.Context) {
 	p.fallbackMinResponseTime.Store(int32(fallbackHealthCheck.MinResponseTime))
 }
 
-func (p *PaymentProcessor) checkHealth(ctx context.Context, url string) (*models.HealthCheck, error) {
+func (p *PaymentService) checkHealth(ctx context.Context, url string) (*models.HealthCheck, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err

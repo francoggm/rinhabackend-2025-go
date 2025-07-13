@@ -15,7 +15,7 @@ func (h *Handlers) ProcessPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payment.RequestedAt = time.Now()
+	payment.RequestedAt = time.Now().UTC()
 	h.paymentEventsCh <- &payment
 
 	w.WriteHeader(http.StatusAccepted)

@@ -7,8 +7,8 @@ CREATE TABLE payments (
   id SERIAL PRIMARY KEY,
   correlation_id UUID NOT NULL,
   amount NUMERIC(10, 2) NOT NULL,
-  type processor_type NOT NULL,
+  processor_type processor_type NOT NULL,
   requested_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_payments_type_timestamp ON payments(type, requested_at);
+CREATE INDEX idx_payments_type_timestamp ON payments(processor_type, requested_at);
