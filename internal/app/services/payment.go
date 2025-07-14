@@ -57,10 +57,11 @@ func (p *PaymentService) MakePayment(ctx context.Context, payment *models.Paymen
 		processingType = "fallback"
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url+"/payments", bytes.NewBuffer(payload))
 	if err != nil {
 		return nil
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {

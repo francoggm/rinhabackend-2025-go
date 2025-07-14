@@ -25,13 +25,13 @@ func (h *Handlers) GetPaymentsSummary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := h.storageService.GetPaymentsSummary(ctx, from, to)
+	summary, err := h.storageService.GetPaymentsSummary(ctx, from, to)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(result); err != nil {
+	if err := json.NewEncoder(w).Encode(summary); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

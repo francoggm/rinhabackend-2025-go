@@ -34,6 +34,10 @@ func main() {
 		panic(err)
 	}
 
+	if err := db.Ping(ctx); err != nil {
+		panic(fmt.Errorf("failed to connect to database: %w", err))
+	}
+
 	// Worker queues
 	paymentEventsCh := make(chan any, cfg.PaymentBufferSize)
 	storageEventsCh := make(chan any, cfg.StorageBufferSize)

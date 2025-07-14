@@ -1,6 +1,5 @@
 services:
   server:
-    container_name: rinha-server
     build: .
     ports:
       - "9999:8080"
@@ -21,12 +20,11 @@ services:
       - PAYMENT_DEFAULT_URL=http://payment-processor-default:8080
       - PAYMENT_FALLBACK_URL=http://payment-processor-fallback:8080
     depends_on:
-      server-db:
+      db:
         condition: service_healthy
     restart: unless-stopped
 
-  server-db:
-    container_name: rinha-server-db
+  db:
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=postgres
