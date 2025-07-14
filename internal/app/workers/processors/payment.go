@@ -5,6 +5,8 @@ import (
 	"fmt"
 	paymentservice "francoggm/rinhabackend-2025-go/internal/app/services"
 	"francoggm/rinhabackend-2025-go/internal/models"
+
+	"go.uber.org/zap"
 )
 
 type PaymentProcessor struct {
@@ -24,6 +26,8 @@ func (p *PaymentProcessor) ProcessEvent(ctx context.Context, event any) error {
 	if !ok {
 		return fmt.Errorf("invalid event type: %T, expected models.Payment", event)
 	}
+
+	zap.L().Info("Processing payment event", zap.Any("payment", payment))
 
 	if err := p.service.MakePayment(ctx, payment); err != nil {
 		return err

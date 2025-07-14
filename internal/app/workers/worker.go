@@ -36,7 +36,6 @@ func (w *worker) start(ctx context.Context) {
 				return
 			}
 
-			zap.L().Info("Processing event", zap.Int("worker_id", w.id), zap.Any("event", event)) // TODO: Remove log
 			if err := w.eventsProcessor.ProcessEvent(ctx, event); err != nil {
 				zap.L().Error("Failed to process event", zap.Int("worker_id", w.id), zap.Any("event", event), zap.Error(err))
 			}

@@ -2,15 +2,18 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"francoggm/rinhabackend-2025-go/internal/models"
+	"strings"
 	"time"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const insertPaymentQuery = ` INSERT INTO payments (correlation_id, amount, processor_type, requested_at)
+const insertPaymentQuery = `INSERT INTO payments (correlation_id, amount, processor_type, requested_at)
 															VALUES ($1, $2, $3, $4)`
+
+const getPaymentsSummaryBaseQuery = `SELECT processing_type, COUNT(*) AS total_requests, SUM(amount) AS total_amount FROM payments`
 
 type StorageService struct {
 	db *pgxpool.Pool
@@ -35,28 +38,7 @@ func (s *StorageService) SavePayment(ctx context.Context, payment *models.Paymen
 }
 
 func (s *StorageService) GetPaymentsSummary(ctx context.Context, from, to *time.Time) (map[string]*models.ProcessorSummary, error) {
-	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
-	queryBuilder := psql.Select(
-		"processing_type",
-		"COUNT(*) AS total_requests",
-		"SUM(amount) AS total_amount",
-	).
-		From("payments").
-		GroupBy("processing_type")
-
-	if from != nil {
-		queryBuilder = queryBuilder.Where(squirrel.GtOrEq{"requested_at": *from})
-	}
-
-	if to != nil {
-		queryBuilder = queryBuilder.Where(squirrel.Lt{"requested_at": *to})
-	}
-
-	sql, args, err := queryBuilder.ToSql()
-	if err != nil {
-		return nil, err
-	}
+	sql, args := buildGetPaymentsSummaryQuery(from, to)
 
 	rows, err := s.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -77,4 +59,27 @@ func (s *StorageService) GetPaymentsSummary(ctx context.Context, from, to *time.
 	}
 
 	return result, nil
+}
+
+func buildGetPaymentsSummaryQuery(from, to *time.Time) (string, []any) {
+	var where []string
+	var args []any
+
+	if from != nil {
+		where = append(where, fmt.Sprintf("requested_at >= $%d", len(where)+1))
+		args = append(args, *from)
+	}
+
+	if to != nil {
+		where = append(where, fmt.Sprintf("requested_at <= $%d", len(where)+1))
+		args = append(args, *to)
+	}
+
+	sql := getPaymentsSummaryBaseQuery
+	if len(where) > 0 {
+		sql += " WHERE " + strings.Join(where, " AND ")
+	}
+	sql += " GROUP BY processing_type"
+
+	return sql, args
 }

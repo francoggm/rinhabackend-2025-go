@@ -20,11 +20,11 @@ func main() {
 	cfg := config.NewConfig()
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		cfg.User,
-		cfg.Password,
-		cfg.Host,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Host,
 		cfg.Database.Port,
-		cfg.Name,
+		cfg.Database.Name,
 	)
 
 	ctx := context.Background()
@@ -43,7 +43,7 @@ func main() {
 	storageEventsCh := make(chan any, cfg.StorageBufferSize)
 
 	// Services
-	paymentService := services.NewPaymentService(cfg.DefaultURL, cfg.FallbackURL)
+	paymentService := services.NewPaymentService(cfg.PaymentProcessorConfig.DefaultURL, cfg.PaymentProcessorConfig.FallbackURL)
 	storageService := services.NewStorageService(db)
 
 	// Worker processors

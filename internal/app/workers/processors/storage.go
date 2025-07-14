@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"francoggm/rinhabackend-2025-go/internal/app/services"
 	"francoggm/rinhabackend-2025-go/internal/models"
+
+	"go.uber.org/zap"
 )
 
 type StorageProcessor struct {
@@ -22,6 +24,8 @@ func (p *StorageProcessor) ProcessEvent(ctx context.Context, event any) error {
 	if !ok {
 		return fmt.Errorf("invalid event type: %T, expected models.Payment", event)
 	}
+
+	zap.L().Info("Processing storage event", zap.Any("payment", payment))
 
 	return p.service.SavePayment(ctx, payment)
 }
