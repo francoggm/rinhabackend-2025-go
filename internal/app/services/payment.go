@@ -90,7 +90,7 @@ func (p *PaymentService) startHealthChecker() {
 }
 
 func (p *PaymentService) checkDefaultHealth(ctx context.Context) {
-	defaultHealthCheck, err := p.checkHealth(ctx, p.defaultURL+"/health")
+	defaultHealthCheck, err := p.checkHealth(ctx, p.defaultURL+"/payments/service-health")
 	if err != nil {
 		zap.L().Error("default health check failed", zap.Error(err))
 
@@ -108,7 +108,7 @@ func (p *PaymentService) checkDefaultHealth(ctx context.Context) {
 }
 
 func (p *PaymentService) checkFallbackHealth(ctx context.Context) {
-	fallbackHealthCheck, err := p.checkHealth(ctx, p.fallbackURL+"/health")
+	fallbackHealthCheck, err := p.checkHealth(ctx, p.fallbackURL+"/payments/service-health")
 	if err != nil {
 		zap.L().Error("fallback health check failed", zap.Error(err))
 
