@@ -10,6 +10,6 @@ type Payment struct {
 }
 
 type ProcessorSummary struct {
-	TotalRequests int `json:"totalRequests"`
-	TotalAmount   int `json:"totalAmount"`
+	TotalRequests int     `json:"totalRequests"`
+	TotalAmount   float32 `json:"totalAmount"`
 }

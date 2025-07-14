@@ -13,7 +13,7 @@ import (
 const insertPaymentQuery = `INSERT INTO payments (correlation_id, amount, processor_type, requested_at)
 															VALUES ($1, $2, $3, $4)`
 
-const getPaymentsSummaryBaseQuery = `SELECT processing_type, COUNT(*) AS total_requests, SUM(amount) AS total_amount FROM payments`
+const getPaymentsSummaryBaseQuery = `SELECT processor_type, COUNT(*) AS total_requests, SUM(amount) AS total_amount FROM payments`
 
 type StorageService struct {
 	db *pgxpool.Pool
@@ -79,7 +79,7 @@ func buildGetPaymentsSummaryQuery(from, to *time.Time) (string, []any) {
 	if len(where) > 0 {
 		sql += " WHERE " + strings.Join(where, " AND ")
 	}
-	sql += " GROUP BY processing_type"
+	sql += " GROUP BY processor_type"
 
 	return sql, args
 }

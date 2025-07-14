@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func (h *Handlers) GetPaymentsSummary(w http.ResponseWriter, r *http.Request) {
@@ -27,14 +29,16 @@ func (h *Handlers) GetPaymentsSummary(w http.ResponseWriter, r *http.Request) {
 
 	summary, err := h.storageService.GetPaymentsSummary(ctx, from, to)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		zap.L().Error("failed to get payments summary", zap.Error(err))
+		http.Error(w, "failed to get payments summary", http.StatusInternalServerError)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(summary); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		zap.L().Error("failed to encode payments summary", zap.Error(err))
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 }
