@@ -24,7 +24,7 @@ type PaymentService struct {
 
 func NewPaymentService(defaultURL, fallbackURL string) *PaymentService {
 	httpClient := &http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
 			MaxIdleConns:        100,
 			MaxIdleConnsPerHost: 100,
@@ -70,7 +70,7 @@ func (p *PaymentService) MakePayment(ctx context.Context, payment *models.Paymen
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("received non-200 response from %s: %d", url, resp.StatusCode)
+		return fmt.Errorf("received non-200 response from %s: %d", processingType, resp.StatusCode)
 	}
 
 	payment.ProcessingType = processingType

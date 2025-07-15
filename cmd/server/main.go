@@ -8,6 +8,7 @@ import (
 	"francoggm/rinhabackend-2025-go/internal/app/workers"
 	"francoggm/rinhabackend-2025-go/internal/app/workers/processors"
 	"francoggm/rinhabackend-2025-go/internal/config"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -29,7 +30,17 @@ func main() {
 
 	ctx := context.Background()
 
-	db, err := pgxpool.New(ctx, uri)
+	dbCfg, err := pgxpool.ParseConfig(uri)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse database URI: %w", err))
+	}
+
+	dbCfg.MaxConns = int32(cfg.Workers.StorageCount) + 1
+	dbCfg.MinConns = int32(cfg.Workers.StorageCount / 2)
+	dbCfg.MaxConnIdleTime = 5 * time.Minute
+	dbCfg.MaxConnLifetime = 30 * time.Minute
+
+	db, err := pgxpool.NewWithConfig(ctx, dbCfg)
 	if err != nil {
 		panic(err)
 	}

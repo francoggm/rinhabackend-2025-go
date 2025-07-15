@@ -1,28 +1,46 @@
+x-server-template: &server-template
+  build: .
+  environment:
+    - PAYMENT_WORKERS_COUNT=5
+    - PAYMENT_WORKERS_EVENTS_BUFFER_SIZE=100
+    - STORAGE_WORKERS_COUNT=5
+    - STORAGE_WORKERS_EVENTS_BUFFER_SIZE=100
+    - SERVER_PORT=8080
+    - DB_HOST=db
+    - DB_PORT=5432
+    - DB_USER=postgres
+    - DB_PASSWORD=password
+    - DB_NAME=payments
+    - PAYMENT_DEFAULT_URL=http://payment-processor-default:8080
+    - PAYMENT_FALLBACK_URL=http://payment-processor-fallback:8080
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+  networks:
+    - backend
+    - payment-processor
+
 services:
-  server:
-    build: .
+  load-balancer:
+    image: nginx:alpine
+    volumes:
+      - ./project/load-balancer/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "9999:8080"
+      - "9999:80"
     networks:
       - backend
-      - payment-processor
-    environment:
-      - PAYMENT_WORKERS_COUNT=5
-      - PAYMENT_WORKERS_EVENTS_BUFFER_SIZE=100
-      - STORAGE_WORKERS_COUNT=5
-      - STORAGE_WORKERS_EVENTS_BUFFER_SIZE=100
-      - SERVER_PORT=8080
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=payments
-      - PAYMENT_DEFAULT_URL=http://payment-processor-default:8080
-      - PAYMENT_FALLBACK_URL=http://payment-processor-fallback:8080
     depends_on:
-      db:
-        condition: service_healthy
+      - server-1
+      - server-2
     restart: unless-stopped
+
+  server-1:
+    <<: *server-template
+    container_name: server-1
+  server-2:
+    <<: *server-template
+    container_name: server-2
 
   db:
     image: postgres:16-alpine
