@@ -18,16 +18,17 @@ type PaymentService struct {
 	defaultURL              string
 	fallbackURL             string
 	isDefaultHealthy        atomic.Bool
+	isFallbackHealthy       atomic.Bool
 	defaultMinResponseTime  atomic.Int32
 	fallbackMinResponseTime atomic.Int32
 }
 
 func NewPaymentService(defaultURL, fallbackURL string) *PaymentService {
 	httpClient := &http.Client{
-		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
-			MaxIdleConns:        100,
-			MaxIdleConnsPerHost: 100,
+			MaxIdleConns:        1000,
+			MaxIdleConnsPerHost: 1000,
+			MaxConnsPerHost:     1000,
 			IdleConnTimeout:     30 * time.Second,
 		},
 	}
@@ -48,13 +49,9 @@ func (p *PaymentService) MakePayment(ctx context.Context, payment *models.Paymen
 		return err
 	}
 
-	var url, processingType string
-	if p.isDefaultHealthy.Load() {
-		url = p.defaultURL
-		processingType = "default"
-	} else {
-		url = p.fallbackURL
-		processingType = "fallback"
+	url, processingType, err := p.calculateProcessor()
+	if err != nil {
+		return err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url+"/payments", bytes.NewBuffer(payload))
@@ -78,8 +75,31 @@ func (p *PaymentService) MakePayment(ctx context.Context, payment *models.Paymen
 	return nil
 }
 
+func (p *PaymentService) calculateProcessor() (string, string, error) {
+	isDefaultHealthy := p.isDefaultHealthy.Load()
+	isFallbackHealthy := p.isFallbackHealthy.Load()
+	defaultMinResponseTime := p.defaultMinResponseTime.Load()
+	fallbackMinResponseTime := p.fallbackMinResponseTime.Load()
+
+	if !isDefaultHealthy && !isFallbackHealthy {
+		return "", "", fmt.Errorf("both payment processors are unhealthy")
+	}
+
+	if isDefaultHealthy && isFallbackHealthy {
+		if int32(float32(defaultMinResponseTime)*1.5) > fallbackMinResponseTime {
+			return p.defaultURL, "default", nil
+		}
+
+		return p.fallbackURL, "fallback", nil
+	} else if isDefaultHealthy {
+		return p.defaultURL, "default", nil
+	}
+
+	return p.fallbackURL, "fallback", nil
+}
+
 func (p *PaymentService) startHealthChecker() {
-	ticker := time.NewTicker(5100 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
 	for range ticker.C {
@@ -94,34 +114,30 @@ func (p *PaymentService) checkDefaultHealth(ctx context.Context) {
 	defaultHealthCheck, err := p.checkHealth(ctx, p.defaultURL+"/payments/service-health")
 	if err != nil {
 		zap.L().Error("default health check failed", zap.Error(err))
-
-		p.isDefaultHealthy.Store(false)
-		p.defaultMinResponseTime.Store(1000) // Default to a high value if health check fails
 		return
 	}
 
 	zap.L().Info("default health check result",
 		zap.Bool("isFailing", defaultHealthCheck.IsFailing),
-		zap.Int("minResponseTime", defaultHealthCheck.MinResponseTime))
+		zap.Int32("minResponseTime", defaultHealthCheck.MinResponseTime))
 
 	p.isDefaultHealthy.Store(!defaultHealthCheck.IsFailing)
-	p.defaultMinResponseTime.Store(int32(defaultHealthCheck.MinResponseTime))
+	p.defaultMinResponseTime.Store(defaultHealthCheck.MinResponseTime)
 }
 
 func (p *PaymentService) checkFallbackHealth(ctx context.Context) {
 	fallbackHealthCheck, err := p.checkHealth(ctx, p.fallbackURL+"/payments/service-health")
 	if err != nil {
 		zap.L().Error("fallback health check failed", zap.Error(err))
-
-		p.fallbackMinResponseTime.Store(1000) // Default to a high value if health check fails
 		return
 	}
 
 	zap.L().Info("fallback health check result",
 		zap.Bool("isFailing", fallbackHealthCheck.IsFailing),
-		zap.Int("minResponseTime", fallbackHealthCheck.MinResponseTime))
+		zap.Int32("minResponseTime", fallbackHealthCheck.MinResponseTime))
 
-	p.fallbackMinResponseTime.Store(int32(fallbackHealthCheck.MinResponseTime))
+	p.isFallbackHealthy.Store(!fallbackHealthCheck.IsFailing)
+	p.fallbackMinResponseTime.Store(fallbackHealthCheck.MinResponseTime)
 }
 
 func (p *PaymentService) checkHealth(ctx context.Context, url string) (*models.HealthCheck, error) {

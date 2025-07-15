@@ -46,7 +46,11 @@ func (s *StorageService) GetPaymentsSummary(ctx context.Context, from, to *time.
 	}
 	defer rows.Close()
 
-	result := make(map[string]*models.ProcessorSummary)
+	result := map[string]*models.ProcessorSummary{
+		"default":  {},
+		"fallback": {},
+	}
+
 	for rows.Next() {
 		var processingType string
 		var processorSummary models.ProcessorSummary
