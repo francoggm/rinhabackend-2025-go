@@ -86,11 +86,12 @@ func (p *PaymentService) calculateProcessor() (string, string, error) {
 	}
 
 	if isDefaultHealthy && isFallbackHealthy {
-		if int32(float32(defaultMinResponseTime)*1.5) > fallbackMinResponseTime {
-			return p.defaultURL, "default", nil
+		// 30% threshold for fallback
+		if int32(float32(defaultMinResponseTime)*1.3) > fallbackMinResponseTime {
+			return p.fallbackURL, "fallback", nil
 		}
 
-		return p.fallbackURL, "fallback", nil
+		return p.defaultURL, "default", nil
 	} else if isDefaultHealthy {
 		return p.defaultURL, "default", nil
 	}
