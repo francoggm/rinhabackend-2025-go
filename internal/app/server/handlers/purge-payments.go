@@ -3,21 +3,26 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 func (h *Handlers) PurgePayments(w http.ResponseWriter, r *http.Request) {
 	if err := purgeProcessor(h.cfg.PaymentProcessorConfig.DefaultURL + "/admin/purge-payments"); err != nil {
+		zap.L().Error("failed to prune default payments", zap.Error(err))
 		http.Error(w, fmt.Sprintf("failed to prune default payments: %v", err), http.StatusBadGateway)
 		return
 	}
 
 	if err := purgeProcessor(h.cfg.PaymentProcessorConfig.FallbackURL + "/admin/purge-payments"); err != nil {
+		zap.L().Error("failed to prune fallback payments", zap.Error(err))
 		http.Error(w, fmt.Sprintf("failed to prune fallback payments: %v", err), http.StatusBadGateway)
 		return
 	}
 
 	if err := h.storageService.PurgePayments(r.Context()); err != nil {
-		http.Error(w, fmt.Sprintf("failed to prune storage payments: %v", err), http.StatusInternalServerError)
+		zap.L().Error("failed to prune storage payments", zap.Error(err))
+		http.Error(w, fmt.Sprintf("failed to prune storage payments: %v", err), http.StatusBadGateway)
 		return
 	}
 }

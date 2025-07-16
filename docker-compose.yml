@@ -3,8 +3,8 @@ x-server-template: &server-template
   environment:
     - PAYMENT_WORKERS_COUNT=10
     - PAYMENT_WORKERS_EVENTS_BUFFER_SIZE=10000
-    - STORAGE_WORKERS_COUNT=5
-    - STORAGE_WORKERS_EVENTS_BUFFER_SIZE=5000
+    - STORAGE_WORKERS_COUNT=10
+    - STORAGE_WORKERS_EVENTS_BUFFER_SIZE=10000
     - SERVER_PORT=8080
     - DB_HOST=db
     - DB_PORT=5432
@@ -37,8 +37,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.1"
-          memory: 25M
+          cpus: "0.2"
+          memory: 30M
 
   server-1:
     <<: *server-template
@@ -46,16 +46,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.6"
-          memory: 125M
+          cpus: "0.4"
+          memory: 60M
   server-2:
     <<: *server-template
     container_name: server-2
     deploy:
       resources:
         limits:
-          cpus: "0.6"
-          memory: 125M
+          cpus: "0.4"
+          memory: 60M
 
   db:
     image: postgres:16-alpine
@@ -66,6 +66,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./project/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./project/db/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "5432:5432"
     networks:
@@ -79,8 +80,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.2"
-          memory: 75M
+          cpus: "0.5"
+          memory: 200M
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
 volumes:
   postgres_data:

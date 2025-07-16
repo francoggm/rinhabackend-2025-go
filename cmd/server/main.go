@@ -35,8 +35,9 @@ func main() {
 		panic(fmt.Errorf("failed to parse database URI: %w", err))
 	}
 
-	dbCfg.MaxConns = int32(cfg.Workers.StorageCount) + 3
+	dbCfg.MaxConns = 100
 	dbCfg.MinConns = int32(cfg.Workers.StorageCount)
+	dbCfg.HealthCheckPeriod = 30 * time.Second
 	dbCfg.MaxConnIdleTime = 5 * time.Minute
 	dbCfg.MaxConnLifetime = 30 * time.Minute
 
