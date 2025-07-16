@@ -90,25 +90,23 @@ func (p *PaymentService) MakePayment(ctx context.Context, payment *models.Paymen
 func (p *PaymentService) calculateProcessor() (string, string, error) {
 	isDefaultHealthy := p.isDefaultHealthy.Load()
 	isFallbackHealthy := p.isFallbackHealthy.Load()
+
 	defaultMinResponseTime := p.defaultMinResponseTime.Load()
 	fallbackMinResponseTime := p.fallbackMinResponseTime.Load()
 
-	if !isDefaultHealthy && !isFallbackHealthy {
-		return "", "", fmt.Errorf("both payment processors are unhealthy")
-	}
-
-	if isDefaultHealthy && isFallbackHealthy {
-		// 30% threshold for fallback
-		if int32(float32(defaultMinResponseTime)*1.3) > fallbackMinResponseTime {
-			return p.fallbackURL, "fallback", nil
-		}
-
-		return p.defaultURL, "default", nil
-	} else if isDefaultHealthy {
+	if isDefaultHealthy && defaultMinResponseTime < fallbackMinResponseTime {
 		return p.defaultURL, "default", nil
 	}
 
-	return p.fallbackURL, "fallback", nil
+	if isFallbackHealthy {
+		return p.fallbackURL, "fallback", nil
+	}
+
+	if isDefaultHealthy {
+		return p.defaultURL, "default", nil
+	}
+
+	return "", "", fmt.Errorf("both payment processors are unhealthy")
 }
 
 func (p *PaymentService) startHealthChecker() {
