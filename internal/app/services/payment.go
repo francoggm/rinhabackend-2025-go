@@ -94,19 +94,22 @@ func (p *PaymentService) calculateProcessor() (string, string, error) {
 	defaultMinResponseTime := p.defaultMinResponseTime.Load()
 	fallbackMinResponseTime := p.fallbackMinResponseTime.Load()
 
-	if isDefaultHealthy && defaultMinResponseTime < fallbackMinResponseTime {
+	if !isDefaultHealthy && !isFallbackHealthy {
+		return "", "", fmt.Errorf("both payment processors are unhealthy")
+	}
+
+	if isDefaultHealthy && isFallbackHealthy {
+		// 50% threshold for fallback
+		if int32(float32(defaultMinResponseTime)*1.5) > fallbackMinResponseTime {
+			return p.fallbackURL, "fallback", nil
+		}
+
+		return p.defaultURL, "default", nil
+	} else if isDefaultHealthy {
 		return p.defaultURL, "default", nil
 	}
 
-	if isFallbackHealthy {
-		return p.fallbackURL, "fallback", nil
-	}
-
-	if isDefaultHealthy {
-		return p.defaultURL, "default", nil
-	}
-
-	return "", "", fmt.Errorf("both payment processors are unhealthy")
+	return p.fallbackURL, "fallback", nil
 }
 
 func (p *PaymentService) startHealthChecker() {
