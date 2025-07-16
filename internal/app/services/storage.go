@@ -65,6 +65,11 @@ func (s *StorageService) GetPaymentsSummary(ctx context.Context, from, to *time.
 	return result, nil
 }
 
+func (s *StorageService) PurgePayments(ctx context.Context) error {
+	_, err := s.db.Exec(ctx, "DELETE FROM payments")
+	return err
+}
+
 func buildGetPaymentsSummaryQuery(from, to *time.Time) (string, []any) {
 	var where []string
 	var args []any

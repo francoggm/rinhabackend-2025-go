@@ -30,6 +30,7 @@ func NewServer(cfg *config.Config, storageService *services.StorageService, paym
 func (s *Server) registerRoutes() {
 	s.router.Post("/payments", s.handlers.ProcessPayment)
 	s.router.Get("/payments-summary", s.handlers.GetPaymentsSummary)
+	s.router.Post("/purge-payments", s.handlers.PurgePayments)
 }
 
 func (s *Server) Run() error {

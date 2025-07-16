@@ -34,13 +34,28 @@ services:
       - server-1
       - server-2
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 25M
 
   server-1:
     <<: *server-template
     container_name: server-1
+    deploy:
+      resources:
+        limits:
+          cpus: "0.6"
+          memory: 125M
   server-2:
     <<: *server-template
     container_name: server-2
+    deploy:
+      resources:
+        limits:
+          cpus: "0.6"
+          memory: 125M
 
   db:
     image: postgres:16-alpine
@@ -61,6 +76,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 75M
 
 volumes:
   postgres_data:
