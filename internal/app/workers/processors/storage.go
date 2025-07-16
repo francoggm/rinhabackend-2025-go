@@ -2,7 +2,6 @@ package processors
 
 import (
 	"context"
-	"fmt"
 	"francoggm/rinhabackend-2025-go/internal/app/services"
 	"francoggm/rinhabackend-2025-go/internal/models"
 
@@ -20,11 +19,7 @@ func NewStorageProcessor(service *services.StorageService) *StorageProcessor {
 }
 
 func (p *StorageProcessor) ProcessEvent(ctx context.Context, event any) error {
-	payment, ok := event.(*models.Payment)
-	if !ok {
-		return fmt.Errorf("invalid event type: %T, expected models.Payment", event)
-	}
-
+	payment := event.(*models.Payment)
 	zap.L().Info("Processing storage event", zap.Any("payment", payment))
 
 	return p.service.SavePayment(ctx, payment)

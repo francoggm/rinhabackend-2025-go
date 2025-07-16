@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"francoggm/rinhabackend-2025-go/internal/models"
+	"net"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -24,13 +25,24 @@ type PaymentService struct {
 }
 
 func NewPaymentService(defaultURL, fallbackURL string) *PaymentService {
+	tr := &http.Transport{
+		MaxIdleConns:        30,
+		MaxIdleConnsPerHost: 30,
+		IdleConnTimeout:     90 * time.Second,
+		MaxConnsPerHost:     50,
+		DisableCompression:  true,
+		DisableKeepAlives:   false,
+		ForceAttemptHTTP2:   false,
+
+		DialContext: (&net.Dialer{
+			Timeout:   1 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+	}
+
 	httpClient := &http.Client{
-		Transport: &http.Transport{
-			MaxIdleConns:        1000,
-			MaxIdleConnsPerHost: 1000,
-			MaxConnsPerHost:     1000,
-			IdleConnTimeout:     30 * time.Second,
-		},
+		Transport: tr,
 	}
 
 	service := &PaymentService{
