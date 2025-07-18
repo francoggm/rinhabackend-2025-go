@@ -4,8 +4,6 @@ import (
 	"context"
 	paymentservice "francoggm/rinhabackend-2025-go/internal/app/services"
 	"francoggm/rinhabackend-2025-go/internal/models"
-
-	"go.uber.org/zap"
 )
 
 type PaymentProcessor struct {
@@ -22,7 +20,6 @@ func NewPaymentProcessor(service *paymentservice.PaymentService, storageEventsCh
 
 func (p *PaymentProcessor) ProcessEvent(ctx context.Context, event any) error {
 	payment := event.(*models.Payment)
-	zap.L().Info("Processing payment event", zap.Any("payment", payment))
 
 	if err := p.service.MakePayment(ctx, payment); err != nil {
 		return err

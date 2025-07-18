@@ -6,7 +6,6 @@ import (
 	"francoggm/rinhabackend-2025-go/internal/app/services"
 	"francoggm/rinhabackend-2025-go/internal/config"
 	"net/http"
-	_ "net/http/pprof"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -32,9 +31,6 @@ func (s *Server) registerRoutes() {
 	s.router.Post("/payments", s.handlers.ProcessPayment)
 	s.router.Get("/payments-summary", s.handlers.GetPaymentsSummary)
 	s.router.Post("/purge-payments", s.handlers.PurgePayments)
-
-	// Profiler routes
-	s.router.Mount("/debug", http.DefaultServeMux)
 }
 
 func (s *Server) Run() error {

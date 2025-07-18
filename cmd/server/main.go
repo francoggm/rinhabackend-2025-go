@@ -11,13 +11,9 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
 )
 
 func main() {
-	zapLogger, _ := zap.NewProduction()
-	zap.ReplaceGlobals(zapLogger)
-
 	cfg := config.NewConfig()
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",

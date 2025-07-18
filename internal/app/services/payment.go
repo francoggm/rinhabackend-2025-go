@@ -10,8 +10,6 @@ import (
 	"net/http"
 	"sync/atomic"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type PaymentService struct {
@@ -99,8 +97,8 @@ func (p *PaymentService) calculateProcessor() (string, string, error) {
 	}
 
 	if isDefaultHealthy && isFallbackHealthy {
-		// 20% threshold for fallback
-		if int32(float32(defaultMinResponseTime)*1.2) > fallbackMinResponseTime {
+		// 40% threshold for fallback
+		if int32(float32(defaultMinResponseTime)*1.4) > fallbackMinResponseTime {
 			return p.fallbackURL, "fallback", nil
 		}
 
@@ -127,13 +125,8 @@ func (p *PaymentService) startHealthChecker() {
 func (p *PaymentService) checkDefaultHealth(ctx context.Context) {
 	defaultHealthCheck, err := p.checkHealth(ctx, p.defaultURL+"/payments/service-health")
 	if err != nil {
-		zap.L().Error("default health check failed", zap.Error(err))
 		return
 	}
-
-	zap.L().Info("default health check result",
-		zap.Bool("isFailing", defaultHealthCheck.IsFailing),
-		zap.Int32("minResponseTime", defaultHealthCheck.MinResponseTime))
 
 	p.isDefaultHealthy.Store(!defaultHealthCheck.IsFailing)
 	p.defaultMinResponseTime.Store(defaultHealthCheck.MinResponseTime)
@@ -142,13 +135,8 @@ func (p *PaymentService) checkDefaultHealth(ctx context.Context) {
 func (p *PaymentService) checkFallbackHealth(ctx context.Context) {
 	fallbackHealthCheck, err := p.checkHealth(ctx, p.fallbackURL+"/payments/service-health")
 	if err != nil {
-		zap.L().Error("fallback health check failed", zap.Error(err))
 		return
 	}
-
-	zap.L().Info("fallback health check result",
-		zap.Bool("isFailing", fallbackHealthCheck.IsFailing),
-		zap.Int32("minResponseTime", fallbackHealthCheck.MinResponseTime))
 
 	p.isFallbackHealthy.Store(!fallbackHealthCheck.IsFailing)
 	p.fallbackMinResponseTime.Store(fallbackHealthCheck.MinResponseTime)
